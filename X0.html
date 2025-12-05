@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tic Tac Toe — Full</title>
+
+</head>
+<style>
+    :root{
+justify-content:center;
+background:linear-gradient(180deg,#071024 0%, #08233a 100%);
+color:#e6eef6;
+}
+
+
+.app{
+width:min(720px,96vw);
+padding:20px;
+background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+border-radius:14px;
+box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+}
+
+
+h1{margin:6px 0 12px;font-size:24px}
+.controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mode label{margin-right:12px;cursor:pointer;color:var(--muted)}
+.buttons button{margin-left:8px;padding:8px 12px;border-radius:8px;border:0;background:var(--panel);color:inherit;cursor:pointer}
+
+
+.board{
+display:grid;
+grid-template-columns:repeat(3, var(--cell-size));
+grid-template-rows:repeat(3, var(--cell-size));
+gap:10px;
+justify-content:center;
+margin:16px 0;
+}
+
+
+.cell{
+width:var(--cell-size);
+height:var(--cell-size);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:42px;
+font-weight:700;
+background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+border-radius:12px;
+cursor:pointer;
+transition:transform .08s ease, box-shadow .12s ease, background .12s ease;
+box-shadow: 0 4px 14px rgba(2,6,23,0.5);
+}
+
+
+.cell:hover{transform:translateY(-2px)}
+.cell.disabled{cursor:default;opacity:0.9}
+
+
+.cell.x{color:#ffd166}
+.cell.o{color:#6ee7b7}
+
+
+.winning-cell{
+animation: pulse 800ms ease-in-out infinite alternate;
+box-shadow: var(--win-glow);
+}
+
+
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.03)}}
+
+
+.status{margin-bottom:8px}
+#message{color:var(--muted)}
+
+
+.scoreboard{margin-top:8px}
+.scores{display:flex;gap:20px;color:var(--muted)}
+
+
+.hint{margin-top:12px;color:var(--muted);font-size:13px}
+
+
+@media(max-width:480px){
+:root{--cell-size:76px}
+}
+</style>
+<body>
+<main class="app">
+<h1>Tic Tac Toe</h1>
+
+
+<section class="controls">
+<div class="mode">
+<label>
+<input type="radio" name="mode" value="pvp" checked /> 2 Players
+</label>
+<label>
+<input type="radio" name="mode" value="ai" /> Play vs AI
+</label>
+</div>
+
+
+<div class="buttons">
+<button id="rematchBtn">Rematch</button>
+<button id="resetBtn">Reset All</button>
+</div>
+</section>
+
+
+<section id="board" class="board" aria-label="Tic Tac Toe board">
+<!-- 9 cells will be created by JS -->
+</section>
+
+
+<section class="status">
+<div id="message">Player X's turn</div>
+</section>
+
+
+<section class="scoreboard">
+<h2>Scoreboard</h2>
+<div class="scores">
+<div>X: <span id="scoreX">0</span></div>
+<div>O: <span id="scoreO">0</span></div>
+<div>Draws: <span id="scoreDraws">0</span></div>
+</div>
+</section>
+
+
+<footer class="hint">Built with vanilla HTML, CSS and JavaScript</footer>
+</main>
+</body>
+<script>
+   let board = Array(9).fill(null);
+// if winner
+if(winningLine){
+// currentPlayer is the one who placed the last mark
+highlightCells(winningLine);
+showMessage(`Player ${currentPlayer} wins!`);
+updateStats(currentPlayer);
+} else {
+showMessage("It's a draw!");
+updateStats('draw');
+}
+
+
+
+function highlightCells(indices){
+indices.forEach(i => {
+const c = boardEl.querySelector(`.cell[data-index='${i}']`);
+if(c) c.classList.add('winning-cell');
+});
+}
+
+
+function showMessage(text){
+messageEl.textContent = text;
+}
+
+
+function updateMessage(){
+showMessage(`Player ${currentPlayer}'s turn`);
+}
+
+
+// --- AI (basic random) ---
+function aiMove(){
+if(gameOver) return;
+const empty = board
+.map((v,i) => v === null ? i : null)
+.filter(i => i !== null);
+if(empty.length === 0) return;
+const choice = empty[Math.floor(Math.random() * empty.length)];
+handleClick(choice);
+}
+
+
+// --- Rematch & Reset ---
+function rematchGame(){
+board = Array(9).fill(null);
+currentPlayer = 'X';
+gameOver = false;
+// clear UI highlights
+renderBoard();
+updateMessage();
+// if mode is AI and AI is O and X was chosen to start, no immediate AI move
+}
+
+
+function resetGame(){
+rematchGame();
+stats = { X: 0, O: 0, draws: 0 };
+saveStats();
+renderStats();
+}
+
+
+// --- Stats ---
+function updateStats(result){
+if(result === 'X') stats.X++;
+else if(result === 'O') stats.O++;
+else stats.draws++;
+saveStats();
+renderStats();
+}
+
+
+function renderStats(){
+scoreX.textContent = stats.X;
+scoreO.textContent = stats.O;
+scoreDraws.textContent = stats.draws;
+}
+
+
+function saveStats(){
+try{ localStorage.setItem('ttt_stats', JSON.stringify(stats)); }
+catch(e){ /* ignore */ }
+}
+
+
+function loadStats(){
+try{
+const stored = localStorage.getItem('ttt_stats');
+if(stored) stats = JSON.parse(stored);
+}catch(e){ /* ignore */ }
+}
+
+
+// --- Start ---
+init();
+</script>
+</html>
